@@ -1,7 +1,7 @@
 import time
 
 
-class Payment:
+class Payment(object):
     authorization_number = None
     amount = None
     invoice = None
@@ -32,7 +32,7 @@ class Payment:
         return self.paid_at != None
 
 
-class Invoice:
+class Invoice():
     billing_address = None
     shipping_address = None
     order = None
@@ -42,8 +42,8 @@ class Invoice:
         self.shipping_address = attributes.get('shipping_address', None)
         self.order = attributes.get('order', None)
 
-
-class Order:
+#Processar o pedido
+class Order():
     customer = None
     items = None
     payment = None
@@ -57,7 +57,16 @@ class Order:
         self.address = attributes.get('address', Address(zipcode='45678-979'))
 
     def add_product(self, product):
-        self.items.append(self.order_item_class(order=self, product=product))
+    
+        self.item = product
+        if item == "Inscrito":
+            self.items.append(Subscription(order=self))
+        elif item == "Livro":
+            self.items.append(Book(order=self))
+        elif item == "Fisico":
+            self.items.append(Physical(order=self))
+        elif item == "Midia":
+            self.items.append(Midia(order=self))
 
     def total_amount(self):
         total = 0
@@ -70,67 +79,90 @@ class Order:
         self.closed_at = closed_at
 
     # remember: you can create new methods inside those classes to help you create a better design
-
-
-class OrderItem:
+    
+class OrderItem():
     order = None
     product = None
 
     def __init__(self, order, product):
-        self.order = order
-        self.product = product
-
+        self.__init__(self, order, Product("Produto"))
     def total(self):
         return 10
 
+class Book(OrderItem):
+    def __init__(self, order):
+        OrderItem.__init__(self, order, Book("Livro"))
 
-class Product:
-    # use type to distinguish each kind of product: physical, book, digital, membership, etc.
+    def send(self):
+        ShippingLabel('Este item é isento de impostos conforme disposto na Constituicao Art. 150, VI, d.').generateLabel()
+
+class Midia(OrderItem):
+    def __init__(self, order):
+        OrderItem.__init__(self, order, Midia("Midia"))
+
+    def send(self):
+        # Need to implement sender and reciver message
+        Notify('conceder voucher').send()
+ 
+class Physical(OrderItem):
+
+    def __init__(self, order):
+        OrderItem.__init__(self, order, Physical("Fisico"))
+
+    def send(self):
+        ShippingLabel('info').generateLabel()
+
+class Subscription(OrderItem):
+    def __init__(self, order):
+        OrderItem.__init__(self, order, Subscription("Inscrito"))
+    def send(self):
+        Membership(self.order.customer.email).activate()
+        Notify('info').send()
+#Fazer o pedido 
+
+     
+      
+#Adicionar o ShippingLabel, Notificação e Envio de Email.
+class ShippingLabel():
+    value = None
+    def __init__ (self, value):
+        self.value = value
+    def generateLabel(self):
+        print("%d") %(self)
+class Notify():
+    text = None
+    def __init__ (self, text):
+        self.text = text
+    def send(self):
+        sendEmail.send(self)
+class sendEmail():
+    queuedArray = []
+    @staticmethod
+    def send(text):
+        sendEmail.queuedArray.append(text)
+#Adicionar o ShippingLabel, Notificação e Envio de Email.
+
+
+        
+class Product(object):
+    # type to distinguish: physical, book, digital, membership...
     name = None
     type = None
-
     def __init__(self, name, type):
         self.name = name
         self.type = type
-
-
-class Address:
+class Address():
     zipcode = None
 
     def __init__(self, zipcode):
         self.zipcode = zipcode
-
-
-class CreditCard:
-
+class CreditCard():
     @staticmethod
     def fetch_by_hashed(code):
         return CreditCard()
-
-
-class Customer:
-    # you can customize this class by yourself
+class Customer():
+    pass
+class Membership():
     pass
 
 
-class Membership:
-    # you can customize this class by yourself
-    pass
-
-
-# Book Example (build new payments if you need to properly test it)
-foolano = Customer()
-book = Product(name='Awesome book', type='book')
-book_order = Order(foolano)
-book_order.add_product(book)
-
-attributes = dict(
-    order=book_order,
-    payment_method=CreditCard.fetch_by_hashed('43567890-987654367')
-)
-payment_book = Payment(attributes=attributes)
-payment_book.pay()
-print(payment_book.is_paid())  # < true
-print(payment_book.order.items[0].product.type)
-
-# now, how to deal with shipping rules then?
